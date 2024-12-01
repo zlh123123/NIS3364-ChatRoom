@@ -1,0 +1,19 @@
+CREATE DATABASE IF NOT EXISTS ChatRoom;
+USE ChatRoom;
+
+-- 用户表
+CREATE TABLE User (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    image VARCHAR(255) NOT NULL
+);
+
+--聊天记录表
+CREATE TABLE history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sender VARCHAR(255) NOT NULL,
+    receiver VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
