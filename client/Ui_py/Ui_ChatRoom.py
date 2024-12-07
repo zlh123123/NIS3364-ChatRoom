@@ -9,6 +9,37 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtGui import QKeyEvent
+from PyQt5.QtCore import Qt
+from qfluentwidgets import (
+    ListWidget,
+    PlainTextEdit,
+    PushButton,
+    TransparentToolButton,
+    FluentIcon,
+)
+from PyQt5.QtWidgets import QFileDialog, QMenu, QAction
+
+
+# 重写PlainTextEdit类，让其具备按下回车键发送消息的功能
+class myplainTextEdit(PlainTextEdit):
+    def __init__(self, parent=None):
+        super(myplainTextEdit, self).__init__(parent)
+        # self.installEventFilter(self)
+
+    def keyPressEvent(self, event: QKeyEvent):
+        if (
+            event.key() == Qt.Key_Return and event.modifiers() == Qt.ControlModifier
+        ):  # ctrl+回车
+            self.insertPlainText("\n")  # 添加换行
+        elif self.toPlainText() and event.key() == Qt.Key_Return:  # 回车
+            self.demo_function()  # 调用 demo 函数
+        else:
+            super().keyPressEvent(event)
+
+    def demo_function(self):
+        print(self.toPlainText())
+        self.clear()
 
 
 class Ui_ChatRoom(object):
@@ -18,7 +49,7 @@ class Ui_ChatRoom(object):
         self.listWidget = ListWidget(ChatRoom)
         self.listWidget.setGeometry(QtCore.QRect(25, 30, 221, 541))
         self.listWidget.setObjectName("listWidget")
-        self.plainTextEdit = PlainTextEdit(ChatRoom)
+        self.plainTextEdit = myplainTextEdit(ChatRoom)
         self.plainTextEdit.setGeometry(QtCore.QRect(280, 410, 561, 161))
         self.plainTextEdit.setObjectName("plainTextEdit")
         self.plainTextEdit_2 = PlainTextEdit(ChatRoom)
@@ -40,15 +71,22 @@ class Ui_ChatRoom(object):
         self.toolButton_4.setGeometry(QtCore.QRect(360, 380, 24, 22))
         self.toolButton_4.setObjectName("toolButton_4")
 
-
+        # 设置图标
         self.toolButton.setIcon(FluentIcon.GAME)
         self.toolButton_2.setIcon(FluentIcon.FOLDER)
         self.toolButton_4.setIcon(FluentIcon.MICROPHONE)
         self.toolButton_3.setIcon(FluentIcon.SYNC)
 
+        # self.listWidget.addItem("1")
 
         self.retranslateUi(ChatRoom)
         QtCore.QMetaObject.connectSlotsByName(ChatRoom)
+
+        # 信号与槽
+        self.pushButton.clicked.connect(self.send)
+        self.toolButton_2.clicked.connect(self.open_file_dialog)
+        self.toolButton_4.clicked.connect(self.open_file_dialog_micro)
+        self.toolButton.clicked.connect(self.show_emoji_menu)
 
     def retranslateUi(self, ChatRoom):
         _translate = QtCore.QCoreApplication.translate
@@ -58,4 +96,55 @@ class Ui_ChatRoom(object):
         self.pushButton.setText(_translate("ChatRoom", "发送"))
         self.toolButton_3.setText(_translate("ChatRoom", ""))
         self.toolButton_4.setText(_translate("ChatRoom", ""))
-from qfluentwidgets import ListWidget, PlainTextEdit, PushButton, TransparentToolButton, FluentIcon
+
+    def send(self):
+        text = self.plainTextEdit.toPlainText()
+        self.plainTextEdit.clear()
+        print(text)
+
+    def open_file_dialog(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(
+            self, "选择文件", "", "所有文件 (*)", options=options
+        )
+        if fileName:
+            print(f"选择的文件: {fileName}")
+
+    def open_file_dialog_micro(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(
+            self, "选择音频", "", "音频文件 (*.mp3 *.wav *.flac)", options=options
+        )
+        if fileName:
+            print(f"选择的文件: {fileName}")
+
+    def show_emoji_menu(self):
+        menu = QMenu(self)
+
+        # 添加表情选项
+        emoji_list = [
+            "😀",
+            "😂",
+            "😍",
+            "😢",
+            "😎",
+            "😡",
+            "😜",
+            "🤔",
+            "😇",
+            "🤗",
+            "😴",
+        ]
+        for emoji in emoji_list:
+            action = QAction(emoji, self)
+            action.triggered.connect(lambda checked, e=emoji: self.select_emoji(e))
+            menu.addAction(action)
+
+        # 显示菜单
+        menu.exec_(self.toolButton.mapToGlobal(self.toolButton.rect().bottomLeft()))
+
+    def select_emoji(self, emoji):
+        # print(f"选择的表情: {emoji}")
+        self.plainTextEdit.insertPlainText(emoji)
