@@ -44,6 +44,7 @@ class myplainTextEdit(PlainTextEdit):
 
 class Ui_ChatRoom(object):
     def setupUi(self, ChatRoom):
+
         ChatRoom.setObjectName("ChatRoom")
         ChatRoom.resize(875, 627)
         self.listWidget = ListWidget(ChatRoom)
@@ -53,7 +54,7 @@ class Ui_ChatRoom(object):
         self.plainTextEdit.setGeometry(QtCore.QRect(280, 410, 561, 161))
         self.plainTextEdit.setObjectName("plainTextEdit")
         self.plainTextEdit_2 = PlainTextEdit(ChatRoom)
-        self.plainTextEdit_2.setGeometry(QtCore.QRect(280, 30, 561, 341))
+        self.plainTextEdit_2.setGeometry(QtCore.QRect(280, 35, 561, 341))
         self.plainTextEdit_2.setObjectName("plainTextEdit_2")
         self.toolButton = TransparentToolButton(ChatRoom)
         self.toolButton.setGeometry(QtCore.QRect(280, 380, 24, 22))
@@ -77,7 +78,7 @@ class Ui_ChatRoom(object):
         self.toolButton_4.setIcon(FluentIcon.MICROPHONE)
         self.toolButton_3.setIcon(FluentIcon.SYNC)
 
-        # self.listWidget.addItem("1")
+        #self.listWidget.addItem("1")
 
         self.retranslateUi(ChatRoom)
         QtCore.QMetaObject.connectSlotsByName(ChatRoom)

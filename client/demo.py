@@ -9,7 +9,6 @@ from qframelesswindow import FramelessWindow as Window
 from Ui_py.Ui_ChatRoom import Ui_ChatRoom
 
 
-
 class LoginWindow(Window, Ui_Form):
 
     def __init__(self):
@@ -58,9 +57,28 @@ class ChatRoom(Window, Ui_ChatRoom):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.setWindowTitle('ChatRoom')
-        self.setWindowIcon(QIcon(":/images/logo.png"))
+        self.setTitleBar(SplitTitleBar(self))
+        self.titleBar.raise_()
 
+        
+        self.setWindowTitle("ChatRoom")
+        self.setWindowIcon(QIcon(":/images/logo.png"))
+        
+
+        self.titleBar.titleLabel.setStyleSheet(
+            """
+            QLabel{
+                background: transparent;
+                font: 13px 'Segoe UI';
+                padding: 0 4px;
+                color: black
+            }
+        """
+        )
+
+        desktop = QApplication.desktop().availableGeometry()
+        w, h = desktop.width(), desktop.height()
+        self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
 
 
 if __name__ == '__main__':
@@ -72,11 +90,8 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
 
-    # Internationalization
-    translator = FluentTranslator(QLocale())
-    app.installTranslator(translator)
 
-    # w = LoginWindow()
-    w = ChatRoom()
+    w = LoginWindow()
+    # w = ChatRoom()
     w.show()
     app.exec_()

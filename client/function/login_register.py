@@ -7,10 +7,15 @@ import function.utils as utils
 
 from PyQt5.QtWidgets import QMessageBox
 import re
-from Ui_py.Ui_LoginWindow import showdialog
+from function.chatroom import ChatRoom
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import QCoreApplication
 
 s = None
 user = ""
+current_object = ""
+users = []
+chatroom_window = None
 
 
 def shutdown():
@@ -39,9 +44,9 @@ def ishostright(host, port):
 def login(host, port, username, password):
     if not ishostright(host, port):
         QMessageBox.critical(None, "登录失败", "请输入正确的ip地址或端口号！")
-        
+
         return
-    global s, user
+    global s, user, chatroom_window
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(5)  # 设置超时时间
     if username != "" and password != "":
@@ -57,15 +62,26 @@ def login(host, port, username, password):
         response = utils.recv(s)
         if response["response"] == "ok":
             user = username
+
+            # 显示登录成功的对话框
+            QMessageBox.information(None, "登录成功", "您已成功登录！")
+
+            # 显示主窗口并关闭登录窗口
+            chatroom_window = ChatRoom()
+
+            chatroom_window.show()
+            QApplication.instance().activeWindow().close()
+
             utils.send(s, {"action": "get_all_users"})
-            utils.send(s, {"action": "get_all_history", "object": ""})
+            utils.send(s, {"action": "get_history", "object": ""})
 
             # 开启异步进程，根据服务器返回的数据进行处理
             t = threading.Thread(target=handle_server_response, args=())
             t.daemon = True  # 设置为守护线程，主线程结束时，守护线程也会结束
             t.start()
-            # 显示登录成功的对话框
-            QMessageBox.information(None, "登录成功", "您已成功登录！")
+
+            QCoreApplication.instance().aboutToQuit.connect(shutdown)
+
         elif response["response"] == "fail":
             QMessageBox.critical(None, "登录失败", response["reason"])
 
@@ -107,4 +123,23 @@ def register(host, port, username, password):
 
 
 def handle_server_response():
-    pass
+    global s, users, current_object, chatroom_window
+    while True:
+        data = utils.recv(s)
+        if data["action"] == "get_all_users":
+            users = data["data"]
+            # print(users)
+
+            chatroom_window.update_users(users)
+
+        elif data["action"] == "get_history":
+            if data["object"] == current_object:
+                chatroom_window.update_history(data["data"])
+
+        elif data["action"] == "person_join":
+            users.append(data["object"])
+            chatroom_window.update_users(users)
+        
+        elif data["action"] == "person_left":
+            users.remove(data["object"])
+            chatroom_window.update_users(users)

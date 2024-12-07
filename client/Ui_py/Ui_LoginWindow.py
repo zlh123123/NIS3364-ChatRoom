@@ -118,7 +118,7 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
-        self.lineEdit.setPlaceholderText(_translate("Form", "127.0.0.1"))
+        self.lineEdit.setText(_translate("Form", "127.0.0.1"))
         self.label_3.setText(_translate("Form", "主机"))
         self.lineEdit_2.setText(_translate("Form", "12345"))
         self.label_4.setText(_translate("Form", "端口"))
@@ -137,9 +137,6 @@ class Ui_Form(object):
         password = self.lineEdit_4.text()
         login(host, port, username, password)
 
-
-    
-
     def register(self):
         from function.login_register import register  # 在方法内部导入
         host = self.lineEdit.text()
@@ -147,8 +144,6 @@ class Ui_Form(object):
         username = self.lineEdit_3.text()
         password = self.lineEdit_4.text()
         register(host, port, username, password)
-
-
 
 
 def showdialog(title, content, parent=None):
