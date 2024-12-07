@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QApplication
 from qfluentwidgets import setThemeColor, FluentTranslator, setTheme, Theme, SplitTitleBar, isDarkTheme
 from Ui_py.Ui_LoginWindow import Ui_Form
 from qframelesswindow import FramelessWindow as Window
-
+from Ui_py.Ui_ChatRoom import Ui_ChatRoom
 
 
 
@@ -53,6 +53,15 @@ class LoginWindow(Window, Ui_Form):
         return QRect(size.width() - 75, 0, 75, size.height())
 
 
+class ChatRoom(Window, Ui_ChatRoom):
+
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        self.setWindowTitle('ChatRoom')
+        self.setWindowIcon(QIcon(":/images/logo.png"))
+
+
 
 if __name__ == '__main__':
     # enable dpi scale
@@ -67,6 +76,7 @@ if __name__ == '__main__':
     translator = FluentTranslator(QLocale())
     app.installTranslator(translator)
 
-    w = LoginWindow()
+    # w = LoginWindow()
+    w = ChatRoom()
     w.show()
     app.exec_()
