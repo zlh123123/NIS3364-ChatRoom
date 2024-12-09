@@ -72,7 +72,9 @@ def login(host, port, username, password):
             chatroom_window.show()
             QApplication.instance().activeWindow().close()
 
-            QCoreApplication.instance().aboutToQuit.connect(shutdown)# 关闭窗口时关闭socket
+            QCoreApplication.instance().aboutToQuit.connect(
+                shutdown
+            )  # 关闭窗口时关闭socket
             utils.send(s, {"action": "get_all_users"})
             utils.send(s, {"action": "get_history", "object": ""})
 
@@ -80,8 +82,6 @@ def login(host, port, username, password):
             t = threading.Thread(target=handle_server_response, args=())
             t.daemon = True  # 设置为守护线程，主线程结束时，守护线程也会结束
             t.start()
-
-            
 
         elif response["response"] == "fail":
             QMessageBox.critical(None, "登录失败", response["reason"])
@@ -127,7 +127,7 @@ def send_msg(msg):
     global s, user, current_object
     if msg != "":
         if current_object == "":
-            utils.send(s, {"action": "chat", "peer": '',"msg": msg})
+            utils.send(s, {"action": "chat", "peer": "", "msg": msg})
         else:
             utils.send(s, {"action": "chat", "peer": current_object, "msg": msg})
             # 将发送的消息显示在聊天框中
@@ -142,6 +142,7 @@ def choose_object(object):
     global current_object, s
     current_object = object
     utils.send(s, {"action": "get_history", "object": object})
+
 
 def handle_server_response():
     global s, users, current_object, chatroom_window, user
@@ -164,26 +165,45 @@ def handle_server_response():
                 chatroom_window.update_users(users)
 
             elif data["action"] == "msg":
-                chatroom_window.append_message(
-                    [
-                        user,
+                # 如果当前频道是发送消息的对象，则显示消息
+                if current_object == data["peer"]:
+                    chatroom_window.append_message(
+                        [
+                            user,
+                            current_object,
+                            time.strftime("%m月%d日%H:%M"),
+                            data["msg"],
+                        ],
                         current_object,
-                        time.strftime("%m月%d日%H:%M"),  
-                        data["msg"],
-                    ],
-                    current_object,
-                )
+                    )
+                # 如果不是，就在列表中显示有消息的对象，在名字后面加上（有新消息）
+                else:
+                    for i in range(chatroom_window.listWidget.count()):
+                        if chatroom_window.listWidget.item(i).text() == data["peer"]:
+                            chatroom_window.listWidget.item(i).setText(
+                                f"{data['peer']}（有新消息）"
+                            )
 
             elif data["action"] == "broadcast":
-                chatroom_window.append_message(
-                    [
-                        data["peer"],
+                # 如果当前频道是全局广播，则显示消息
+                if current_object == "":
+                    chatroom_window.append_message(
+                        [
+                            data["peer"],
+                            "",
+                            time.strftime("%m月%d日%H:%M"),
+                            data["msg"],
+                        ],
                         "",
-                        time.strftime("%m月%d日%H:%M"),
-                        data["msg"],
-                    ],  
-                    "",
-                )
+                    )
+                # 如果不是，就在全局广播后面加上（有新消息）
+                else:
+                    for i in range(chatroom_window.listWidget.count()):
+                        if chatroom_window.listWidget.item(i).text() == "全局广播":
+                            chatroom_window.listWidget.item(i).setText(
+                                "全局广播（有新消息）"
+                            )
+
         except Exception as e:
             print(f"Exception in handle_server_response: {e}")
             break

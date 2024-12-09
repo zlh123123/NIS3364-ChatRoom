@@ -19,9 +19,9 @@ from qfluentwidgets import (
     FluentIcon,
 )
 from PyQt5.QtWidgets import QFileDialog, QMenu, QAction
+from PyQt5.QtCore import QMetaType
 
-
-
+from PyQt5.QtGui import QTextBlock
 
 
 # 重写PlainTextEdit类，让其具备按下回车键发送消息的功能
@@ -44,7 +44,6 @@ class myplainTextEdit(PlainTextEdit):
 
 class Ui_ChatRoom(object):
     def setupUi(self, ChatRoom):
-
 
         ChatRoom.setObjectName("ChatRoom")
         ChatRoom.resize(875, 627)
@@ -89,7 +88,6 @@ class Ui_ChatRoom(object):
         self.listWidget.itemClicked.connect(self.on_item_clicked)
 
         self.retranslateUi(ChatRoom)
-        
 
     def retranslateUi(self, ChatRoom):
         _translate = QtCore.QCoreApplication.translate
@@ -157,9 +155,16 @@ class Ui_ChatRoom(object):
     def on_item_clicked(self, item):
         from function.login_register import choose_object
 
+        # 如果内容后有（有新消息）则去掉
+        if "（有新消息）" in item.text():
+            item.setText(item.text().replace("（有新消息）", ""))
+
         # print(item.text())
         if item.text() == "全局广播":
             choose_object("")
         else:
 
             choose_object(item.text())
+
+    def insertPlainText(self, text):
+        self.plainTextEdit_2.insertPlainText(text)
