@@ -46,10 +46,10 @@ class ChatRoom(Window, Ui_ChatRoom):
             if isinstance(msg, list):
                 sender, receiver, time, content = msg
                 if current_object in [sender, receiver] or receiver == "":
-                    formatted_msg = f"{sender} - {time}\n{content}\n\n"
+                    formatted_msg = f"<b>{sender} - {time}</b><br>{content}<br><br>"
                     self.insertPlainText(formatted_msg)
             else:
-                formatted_msg = msg + "\n\n"
+                formatted_msg = msg + "<br><br>"
                 self.insertPlainText(formatted_msg)
 
     def append_message(self, msg, current_object):
@@ -57,8 +57,11 @@ class ChatRoom(Window, Ui_ChatRoom):
         if isinstance(msg, list):
             sender, receiver, time, content = msg
             if current_object in [sender, receiver] or receiver == "":
-                formatted_msg = f"{sender} - {time}\n{content}\n\n"
+                formatted_msg = f"<b>{sender} - {time}</b><br>{content}<br><br>"
                 self.insertPlainText(formatted_msg)
         else:
-            formatted_msg = msg + "\n\n"
+            formatted_msg = msg + "<br><br>"
             self.insertPlainText(formatted_msg)
+
+    def insertPlainText(self, text):
+        self.plainTextEdit_2.insertHtml(text)

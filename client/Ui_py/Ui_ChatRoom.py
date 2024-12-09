@@ -17,6 +17,7 @@ from qfluentwidgets import (
     PushButton,
     TransparentToolButton,
     FluentIcon,
+    TextEdit,
 )
 from PyQt5.QtWidgets import QFileDialog, QMenu, QAction
 from PyQt5.QtCore import QMetaType
@@ -53,7 +54,7 @@ class Ui_ChatRoom(object):
         self.plainTextEdit = myplainTextEdit(ChatRoom)
         self.plainTextEdit.setGeometry(QtCore.QRect(280, 410, 561, 161))
         self.plainTextEdit.setObjectName("plainTextEdit")
-        self.plainTextEdit_2 = PlainTextEdit(ChatRoom)
+        self.plainTextEdit_2 = TextEdit(ChatRoom)
         self.plainTextEdit_2.setGeometry(QtCore.QRect(280, 35, 561, 341))
         self.plainTextEdit_2.setObjectName("plainTextEdit_2")
         self.plainTextEdit_2.setReadOnly(True)
@@ -166,8 +167,7 @@ class Ui_ChatRoom(object):
 
             choose_object(item.text())
 
-    def insertPlainText(self, text):
-        self.plainTextEdit_2.insertPlainText(text)
+
 
     def update_list_item_text(self, peer):
         for i in range(self.listWidget.count()):

@@ -40,9 +40,9 @@ class Handler(socketserver.BaseRequestHandler):
                 if not self.authed:
                     self.user = data["username"]
                     if data["action"] == "login":
-                        #打印用户姓名+加入聊天室
+                        # 打印用户姓名+加入聊天室
                         print(self.user + " 加入聊天室")
-    
+
                         if self.validate(data["username"], data["password"]):
                             utils.send(self.request, {"response": "ok"})
                             self.authed = True
@@ -52,7 +52,7 @@ class Handler(socketserver.BaseRequestHandler):
                                     Handler.clients[user].request,
                                     {"action": "person_join", "object": self.user},
                                 )
-                                #print(user)
+                                # print(user)
                             Handler.clients[self.user] = self  # 将客户端加入clients字典
                         elif self.isUserExist(data["username"]):
                             utils.send(
@@ -65,7 +65,7 @@ class Handler(socketserver.BaseRequestHandler):
                                 {"response": "fail", "reason": "密码错误"},
                             )
                     elif data["action"] == "register":
-                        #print(data)
+                        # print(data)
                         if self.register(data["username"], data["password"]):
                             utils.send(self.request, {"response": "ok"})
                         else:
@@ -88,14 +88,17 @@ class Handler(socketserver.BaseRequestHandler):
                                 "data": self.get_history(self.user, data["object"]),
                             },
                         )
-                    #向指定用户发送消息
+                        print("对象:",data["object"])
+                        print(self.get_history(self.user, data["object"]))
+
+                    # 向指定用户发送消息
                     elif data["action"] == "chat" and data["peer"] != "":
                         utils.send(
                             Handler.clients[data["peer"]].request,
                             {"action": "msg", "peer": self.user, "msg": data["msg"]},
                         )
                         self.append_history(self.user, data["peer"], data["msg"])
-                    #全局广播
+                    # 全局广播
                     elif data["action"] == "chat" and data["peer"] == "":
                         for user in Handler.clients.keys():
                             if user != self.user:
@@ -164,7 +167,7 @@ class Handler(socketserver.BaseRequestHandler):
         # 若receiver为空，则返回所有的历史记录
         if receiver == "":
             self.c.execute(
-                "SELECT sender, receiver, timestamp, message FROM history WHERE sender=? OR receiver=?",
+                "SELECT sender, receiver, timestamp, message FROM history WHERE sender=? OR receiver=? OR receiver=''",
                 (sender, sender),
             )
         else:
