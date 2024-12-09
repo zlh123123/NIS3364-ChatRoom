@@ -10,7 +10,7 @@ import re
 from function.chatroom import ChatRoom
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QCoreApplication
-from PyQt5.QtCore import QMetaObject, Qt
+from PyQt5.QtCore import QEvent, QObject, QCoreApplication
 
 s = None
 user = ""
@@ -143,66 +143,6 @@ def choose_object(object):
     global current_object, s
     current_object = object
     utils.send(s, {"action": "get_history", "object": object})
-
-
-# def handle_server_response():
-#     global s, users, current_object, chatroom_window, user
-#     while True:
-#         try:
-#             data = utils.recv(s)
-#             if data["action"] == "get_all_users":
-#                 users = data["data"]
-#                 chatroom_window.update_users(users)
-
-#             elif data["action"] == "get_history":
-#                 chatroom_window.update_history(data["data"], current_object)
-
-#             elif data["action"] == "person_join":
-#                 users.append(data["object"])
-#                 chatroom_window.update_users(users)
-
-#             elif data["action"] == "person_left":
-#                 users.remove(data["object"])
-#                 chatroom_window.update_users(users)
-
-#             elif data["action"] == "msg":
-#                 # 如果当前频道是发送消息的对象，则显示消息
-#                 if current_object == data["peer"]:
-#                     chatroom_window.append_message(
-#                         [
-#                             user,
-#                             current_object,
-#                             time.strftime("%m月%d日%H:%M"),
-#                             data["msg"],
-#                         ],
-#                         current_object,
-#                     )
-#                 # 如果不是，就在列表中显示有消息的对象，在名字后面加上（有新消息）
-#                 else:
-#                     chatroom_window.update_list_item_text(data["peer"])
-
-#             elif data["action"] == "broadcast":
-#                 # 如果当前频道是全局广播，则显示消息
-#                 if current_object == "":
-#                     chatroom_window.append_message(
-#                         [
-#                             data["peer"],
-#                             "",
-#                             time.strftime("%m月%d日%H:%M"),
-#                             data["msg"],
-#                         ],
-#                         "",
-#                     )
-#                 # 如果不是，就在全局广播后面加上（有新消息）
-#                 else:
-#                     chatroom_window.update_broadcast_text()
-
-#         except Exception as e:
-#             print(f"Exception in handle_server_response: {e}")
-#             break
-
-
-from PyQt5.QtCore import QEvent, QObject, QCoreApplication
 
 
 class UpdateUIEvent(QEvent):
