@@ -168,3 +168,13 @@ class Ui_ChatRoom(object):
 
     def insertPlainText(self, text):
         self.plainTextEdit_2.insertPlainText(text)
+
+    def update_list_item_text(self, peer):
+        for i in range(self.listWidget.count()):
+            if self.listWidget.item(i).text() == peer:
+                self.listWidget.item(i).setText(f"{peer}（有新消息）")
+
+    def update_broadcast_text(self):
+        for i in range(self.listWidget.count()):
+            if self.listWidget.item(i).text() == "全局广播":
+                self.listWidget.item(i).setText("全局广播（有新消息）")

@@ -178,11 +178,7 @@ def handle_server_response():
                     )
                 # 如果不是，就在列表中显示有消息的对象，在名字后面加上（有新消息）
                 else:
-                    for i in range(chatroom_window.listWidget.count()):
-                        if chatroom_window.listWidget.item(i).text() == data["peer"]:
-                            chatroom_window.listWidget.item(i).setText(
-                                f"{data['peer']}（有新消息）"
-                            )
+                    chatroom_window.update_list_item_text(data["peer"])
 
             elif data["action"] == "broadcast":
                 # 如果当前频道是全局广播，则显示消息
@@ -198,11 +194,7 @@ def handle_server_response():
                     )
                 # 如果不是，就在全局广播后面加上（有新消息）
                 else:
-                    for i in range(chatroom_window.listWidget.count()):
-                        if chatroom_window.listWidget.item(i).text() == "全局广播":
-                            chatroom_window.listWidget.item(i).setText(
-                                "全局广播（有新消息）"
-                            )
+                    chatroom_window.update_broadcast_text()
 
         except Exception as e:
             print(f"Exception in handle_server_response: {e}")
