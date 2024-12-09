@@ -146,6 +146,8 @@ class Ui_Form(object):
         register(host, port, username, password)
 
 
+
+
 def showdialog(title, content, parent=None):
     w = MessageBox(title, content, parent)
     w.cancelButton.hide()

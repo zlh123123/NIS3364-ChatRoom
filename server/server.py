@@ -33,76 +33,88 @@ class Handler(socketserver.BaseRequestHandler):
         self.c = self.conn.cursor()
 
     def handle(self):
-        while True:
-            data = utils.recv(self.request)
-            # 如果没有登录
-            if not self.authed:
-                self.user = data["username"]
-                if data["action"] == "login":
-                    if self.validate(data["username"], data["password"]):
-                        utils.send(self.request, {"response": "ok"})
-                        self.authed = True
+        try:
+            while True:
+                data = utils.recv(self.request)
+                # 如果没有登录
+                if not self.authed:
+                    self.user = data["username"]
+                    if data["action"] == "login":
+                        #打印用户姓名+加入聊天室
+                        print(self.user + " 加入聊天室")
+    
+                        if self.validate(data["username"], data["password"]):
+                            utils.send(self.request, {"response": "ok"})
+                            self.authed = True
+                            for user in Handler.clients.keys():
+                                # 发送给其他客户端，有新用户加入
+                                utils.send(
+                                    Handler.clients[user].request,
+                                    {"action": "person_join", "object": self.user},
+                                )
+                                #print(user)
+                            Handler.clients[self.user] = self  # 将客户端加入clients字典
+                        elif self.isUserExist(data["username"]):
+                            utils.send(
+                                self.request,
+                                {"response": "fail", "reason": "用户不存在"},
+                            )
+                        else:
+                            utils.send(
+                                self.request,
+                                {"response": "fail", "reason": "密码错误"},
+                            )
+                    elif data["action"] == "register":
+                        #print(data)
+                        if self.register(data["username"], data["password"]):
+                            utils.send(self.request, {"response": "ok"})
+                        else:
+                            utils.send(
+                                self.request, {"response": "fail", "reason": "账号已存在！"}
+                            )
+                else:
+                    if data["action"] == "get_all_users":
+                        users = []
                         for user in Handler.clients.keys():
-                            # 发送给其他客户端，有新用户加入
-                            utils.send(
-                                Handler.clients[user].request,
-                                {"action": "person_join", "object": self.user},
-                            )
-                        Handler.clients[self.user] = self  # 将客户端加入clients字典
-                    elif self.isUserExist(data["username"]):
+                            if user != self.user:
+                                users.append(user)
+                        utils.send(self.request, {"action": "get_all_users", "data": users})
+                    elif data["action"] == "get_history":
                         utils.send(
                             self.request,
-                            {"response": "fail", "reason": "用户不存在"},
+                            {
+                                "action": "get_history",
+                                "object": data["object"],
+                                "data": self.get_history(self.user, data["object"]),
+                            },
                         )
-                    else:
+                    #向指定用户发送消息
+                    elif data["action"] == "chat" and data["peer"] != "":
                         utils.send(
-                            self.request,
-                            {"response": "fail", "reason": "密码错误"},
+                            Handler.clients[data["peer"]].request,
+                            {"action": "msg", "peer": self.user, "msg": data["msg"]},
                         )
-                elif data["action"] == "register":
-                    print(data)
-                    if self.register(data["username"], data["password"]):
-                        utils.send(self.request, {"response": "ok"})
-                    else:
-                        utils.send(
-                            self.request, {"response": "fail", "reason": "账号已存在！"}
-                        )
-            else:
-                if data["action"] == "get_all_users":
-                    users = []
-                    for user in Handler.clients.keys():
-                        if user != self.user:
-                            users.append(user)
-                    utils.send(self.request, {"action": "get_all_users", "data": users})
-                elif data["action"] == "get_history":
-                    utils.send(
-                        self.request,
-                        {
-                            "action": "get_history",
-                            "object": data["object"],
-                            "data": self.get_history(self.user, data["object"]),
-                        },
-                    )
-                elif data["cmd"] == "chat" and data["peer"] != "":
-                    utils.send(
-                        Handler.clients[data["peer"]].request,
-                        {"type": "msg", "peer": self.user, "msg": data["msg"]},
-                    )
-                    self.append_history(self.user, data["peer"], data["msg"])
-                elif data["cmd"] == "chat" and data["peer"] == "":
-                    for user in Handler.clients.keys():
-                        if user != self.user:
-                            utils.send(
-                                Handler.clients[user].request,
-                                {
-                                    "type": "broadcast",
-                                    "peer": self.user,
-                                    "msg": data["msg"],
-                                },
-                            )
-                    self.append_history(self.user, "", data["msg"])
-                elif data["action"] == "shutdown":
-                    self.finish()
+                        self.append_history(self.user, data["peer"], data["msg"])
+                    #全局广播
+                    elif data["action"] == "chat" and data["peer"] == "":
+                        for user in Handler.clients.keys():
+                            if user != self.user:
+                                utils.send(
+                                    Handler.clients[user].request,
+                                    {
+                                        "action": "broadcast",
+                                        "peer": self.user,
+                                        "msg": data["msg"],
+                                    },
+                                )
+                        self.append_history(self.user, "", data["msg"])
+                    elif data["action"] == "shutdown":
+                        print(self.user + " 离开聊天室")
+                        self.finish()
+                        break
+        except Exception as e:
+            print(f"Exception occurred: {e}")
+            self.finish()
 
     def finish(self):
         if self.authed:
@@ -112,7 +124,7 @@ class Handler(socketserver.BaseRequestHandler):
             for user in Handler.clients.keys():
                 utils.send(
                     Handler.clients[user].request,
-                    {"action": "person_left", "peer": self.user},
+                    {"action": "person_left", "object": self.user},
                 )
         self.conn.close()
 

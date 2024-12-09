@@ -72,6 +72,7 @@ def login(host, port, username, password):
             chatroom_window.show()
             QApplication.instance().activeWindow().close()
 
+            QCoreApplication.instance().aboutToQuit.connect(shutdown)# 关闭窗口时关闭socket
             utils.send(s, {"action": "get_all_users"})
             utils.send(s, {"action": "get_history", "object": ""})
 
@@ -80,7 +81,7 @@ def login(host, port, username, password):
             t.daemon = True  # 设置为守护线程，主线程结束时，守护线程也会结束
             t.start()
 
-            QCoreApplication.instance().aboutToQuit.connect(shutdown)
+            
 
         elif response["response"] == "fail":
             QMessageBox.critical(None, "登录失败", response["reason"])
@@ -122,24 +123,67 @@ def register(host, port, username, password):
     shutdown()
 
 
+def send_msg(msg):
+    global s, user, current_object
+    if msg != "":
+        if current_object == "":
+            utils.send(s, {"action": "chat", "peer": '',"msg": msg})
+        else:
+            utils.send(s, {"action": "chat", "peer": current_object, "msg": msg})
+            # 将发送的消息显示在聊天框中
+        chatroom_window.append_message(
+            [user, current_object, time.strftime("%m月%d日%H:%M"), msg], current_object
+        )
+    else:
+        QMessageBox.critical(None, "发送失败", "消息不能为空！")
+
+
+def choose_object(object):
+    global current_object, s
+    current_object = object
+    utils.send(s, {"action": "get_history", "object": object})
+
 def handle_server_response():
-    global s, users, current_object, chatroom_window
+    global s, users, current_object, chatroom_window, user
     while True:
-        data = utils.recv(s)
-        if data["action"] == "get_all_users":
-            users = data["data"]
-            # print(users)
+        try:
+            data = utils.recv(s)
+            if data["action"] == "get_all_users":
+                users = data["data"]
+                chatroom_window.update_users(users)
 
-            chatroom_window.update_users(users)
+            elif data["action"] == "get_history":
+                chatroom_window.update_history(data["data"], current_object)
 
-        elif data["action"] == "get_history":
-            if data["object"] == current_object:
-                chatroom_window.update_history(data["data"])
+            elif data["action"] == "person_join":
+                users.append(data["object"])
+                chatroom_window.update_users(users)
 
-        elif data["action"] == "person_join":
-            users.append(data["object"])
-            chatroom_window.update_users(users)
-        
-        elif data["action"] == "person_left":
-            users.remove(data["object"])
-            chatroom_window.update_users(users)
+            elif data["action"] == "person_left":
+                users.remove(data["object"])
+                chatroom_window.update_users(users)
+
+            elif data["action"] == "msg":
+                chatroom_window.append_message(
+                    [
+                        user,
+                        current_object,
+                        time.strftime("%m月%d日%H:%M"),  
+                        data["msg"],
+                    ],
+                    current_object,
+                )
+
+            elif data["action"] == "broadcast":
+                chatroom_window.append_message(
+                    [
+                        data["peer"],
+                        "",
+                        time.strftime("%m月%d日%H:%M"),
+                        data["msg"],
+                    ],  
+                    "",
+                )
+        except Exception as e:
+            print(f"Exception in handle_server_response: {e}")
+            break

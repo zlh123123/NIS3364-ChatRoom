@@ -21,11 +21,15 @@ from qfluentwidgets import (
 from PyQt5.QtWidgets import QFileDialog, QMenu, QAction
 
 
+
+
+
 # 重写PlainTextEdit类，让其具备按下回车键发送消息的功能
 class myplainTextEdit(PlainTextEdit):
     def __init__(self, parent=None):
         super(myplainTextEdit, self).__init__(parent)
         # self.installEventFilter(self)
+        self.parent = parent
 
     def keyPressEvent(self, event: QKeyEvent):
         if (
@@ -33,17 +37,14 @@ class myplainTextEdit(PlainTextEdit):
         ):  # ctrl+回车
             self.insertPlainText("\n")  # 添加换行
         elif self.toPlainText() and event.key() == Qt.Key_Return:  # 回车
-            self.demo_function()  # 调用 demo 函数
+            self.parent.send()
         else:
             super().keyPressEvent(event)
-
-    def demo_function(self):
-        print(self.toPlainText())
-        self.clear()
 
 
 class Ui_ChatRoom(object):
     def setupUi(self, ChatRoom):
+
 
         ChatRoom.setObjectName("ChatRoom")
         ChatRoom.resize(875, 627)
@@ -56,6 +57,7 @@ class Ui_ChatRoom(object):
         self.plainTextEdit_2 = PlainTextEdit(ChatRoom)
         self.plainTextEdit_2.setGeometry(QtCore.QRect(280, 35, 561, 341))
         self.plainTextEdit_2.setObjectName("plainTextEdit_2")
+        self.plainTextEdit_2.setReadOnly(True)
         self.toolButton = TransparentToolButton(ChatRoom)
         self.toolButton.setGeometry(QtCore.QRect(280, 380, 24, 22))
         self.toolButton.setObjectName("toolButton")
@@ -78,30 +80,32 @@ class Ui_ChatRoom(object):
         self.toolButton_4.setIcon(FluentIcon.MICROPHONE)
         self.toolButton_3.setIcon(FluentIcon.SYNC)
 
-        #self.listWidget.addItem("1")
-
-        self.retranslateUi(ChatRoom)
-        QtCore.QMetaObject.connectSlotsByName(ChatRoom)
-
         # 信号与槽
         self.pushButton.clicked.connect(self.send)
         self.toolButton_2.clicked.connect(self.open_file_dialog)
         self.toolButton_4.clicked.connect(self.open_file_dialog_micro)
         self.toolButton.clicked.connect(self.show_emoji_menu)
 
+        self.listWidget.itemClicked.connect(self.on_item_clicked)
+
+        self.retranslateUi(ChatRoom)
+        
+
     def retranslateUi(self, ChatRoom):
         _translate = QtCore.QCoreApplication.translate
         ChatRoom.setWindowTitle(_translate("ChatRoom", "Form"))
         self.toolButton.setText(_translate("ChatRoom", ""))
         self.toolButton_2.setText(_translate("ChatRoom", ""))
-        self.pushButton.setText(_translate("ChatRoom", "发送"))
+        self.pushButton.setText(_translate("ChatRoom", "Send"))
         self.toolButton_3.setText(_translate("ChatRoom", ""))
         self.toolButton_4.setText(_translate("ChatRoom", ""))
 
     def send(self):
+        from function.login_register import send_msg
+
         text = self.plainTextEdit.toPlainText()
         self.plainTextEdit.clear()
-        print(text)
+        send_msg(text)
 
     def open_file_dialog(self):
         options = QFileDialog.Options()
@@ -149,3 +153,13 @@ class Ui_ChatRoom(object):
     def select_emoji(self, emoji):
         # print(f"选择的表情: {emoji}")
         self.plainTextEdit.insertPlainText(emoji)
+
+    def on_item_clicked(self, item):
+        from function.login_register import choose_object
+
+        # print(item.text())
+        if item.text() == "全局广播":
+            choose_object("")
+        else:
+
+            choose_object(item.text())

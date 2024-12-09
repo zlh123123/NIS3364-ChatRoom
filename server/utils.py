@@ -26,7 +26,7 @@ def send(socket, data_dict):
 
 def recv(socket):
     data = b''
-    surplus = struct.unpack('>H', socket.recv(2))[0]
+    surplus = struct.unpack('>H', socket.recv(2))[0]#2表示接收两个字节
     socket.settimeout(5)
     while surplus:
         recv_data = socket.recv(max_buff_size if surplus > max_buff_size else surplus)
