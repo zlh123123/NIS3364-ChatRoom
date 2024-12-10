@@ -88,8 +88,8 @@ class Handler(socketserver.BaseRequestHandler):
                                 "data": self.get_history(self.user, data["object"]),
                             },
                         )
-                        print("对象:",data["object"])
-                        print(self.get_history(self.user, data["object"]))
+                        # print("对象:",data["object"])
+                        # print(self.get_history(self.user, data["object"]))
 
                     # 向指定用户发送消息
                     elif data["action"] == "chat" and data["peer"] != "":
