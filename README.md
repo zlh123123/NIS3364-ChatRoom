@@ -3,7 +3,7 @@
 
 # 服务器端
 
-直接在server文件夹下运行`python server.py`即可。（若在linux服务器上运行，则`python3 server.py`。
+直接在server文件夹下运行`python server.py`即可。（若在linux服务器上运行，则`python3 server.py`）。
 
 # 客户端
 
