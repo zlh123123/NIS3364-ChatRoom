@@ -118,13 +118,16 @@ class Ui_ChatRoom(object):
             send_file(fileName)
 
     def open_file_dialog_micro(self):
+        from function.login_register import send_file_micro
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(
             self, "选择音频", "", "音频文件 (*.mp3 *.wav *.flac)", options=options
         )
         if fileName:
-            print(f"选择的文件: {fileName}")
+            # print(f"选择的文件: {fileName}")
+            send_file_micro(fileName)
+
 
     def show_emoji_menu(self):
         menu = QMenu(self)

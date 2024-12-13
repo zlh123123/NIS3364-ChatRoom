@@ -187,6 +187,52 @@ def send_file(file_path):
     else:
         QMessageBox.critical(None, "发送失败", "请选择要发送的文件！")
 
+def send_file_micro(file_path):
+    global s, user, current_object
+    if current_object == "":
+        QMessageBox.critical(None, "发送失败", "不支持全局广播音频！")
+        return
+
+    # 文件名
+    filename = file_path.split("/")[-1]
+    # 文件大小，转换为常用存储单位
+    filesize = os.path.getsize(file_path)
+    if filesize < 1024:
+        size = str(filesize) + "B"
+    elif filesize < 1024 * 1024:
+        size = str(round(filesize / 1024, 2)) + "KB"
+    elif filesize < 1024 * 1024 * 1024:
+        size = str(round(filesize / 1024 / 1024, 2)) + "MB"
+    else:
+        size = str(round(filesize / 1024 / 1024 / 1024, 2)) + "GB"
+
+    # print(f"文件名: {filename}, 文件大小: {size}")
+
+    # 文件内容
+    with open(file_path, "rb") as f:
+        content = f.read()
+
+    # print(content)
+    encoded_content = base64.b64encode(content).decode('utf-8')
+    if file_path != "":
+        utils.send(
+            s,
+            {
+                "action": "send_file",
+                "peer": current_object,
+                "filename": filename,
+                "size": size,
+                "content": encoded_content,
+            },
+        )
+        # 将发送的文件显示在聊天框中
+        chatroom_window.append_message(
+            [user, current_object, time.strftime("%m月%d日%H:%M"), filename],
+            current_object,
+        )
+    else:
+        QMessageBox.critical(None, "发送失败", "请选择要发送的音频！")
+
 
 def choose_object(object):
     global current_object, s
