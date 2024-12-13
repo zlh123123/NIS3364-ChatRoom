@@ -107,13 +107,15 @@ class Ui_ChatRoom(object):
         send_msg(text)
 
     def open_file_dialog(self):
+        from function.login_register import send_file 
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(
             self, "选择文件", "", "所有文件 (*)", options=options
         )
         if fileName:
-            print(f"选择的文件: {fileName}")
+            # print(f"选择的文件: {fileName}")
+            send_file(fileName)
 
     def open_file_dialog_micro(self):
         options = QFileDialog.Options()

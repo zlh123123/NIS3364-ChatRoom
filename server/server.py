@@ -4,7 +4,7 @@ import time
 import sqlite3
 
 import utils
-
+file_content = b""
 # 数据库初始化
 conn = sqlite3.connect("chat.db")
 c = conn.cursor()
@@ -27,12 +27,13 @@ class Handler(socketserver.BaseRequestHandler):
 
     def setup(self):
         self.username = ""
-        self.file_peer = ""
+        self.file_peer = None
         self.authed = False  # authed表示是否已经登录
         self.conn = sqlite3.connect("chat.db")
         self.c = self.conn.cursor()
 
     def handle(self):
+        global file_content
         try:
             while True:
                 data = utils.recv(self.request)
@@ -70,7 +71,8 @@ class Handler(socketserver.BaseRequestHandler):
                             utils.send(self.request, {"response": "ok"})
                         else:
                             utils.send(
-                                self.request, {"response": "fail", "reason": "账号已存在！"}
+                                self.request,
+                                {"response": "fail", "reason": "账号已存在！"},
                             )
                 else:
                     if data["action"] == "get_all_users":
@@ -78,7 +80,9 @@ class Handler(socketserver.BaseRequestHandler):
                         for user in Handler.clients.keys():
                             if user != self.user:
                                 users.append(user)
-                        utils.send(self.request, {"action": "get_all_users", "data": users})
+                        utils.send(
+                            self.request, {"action": "get_all_users", "data": users}
+                        )
                     elif data["action"] == "get_history":
                         utils.send(
                             self.request,
@@ -111,6 +115,58 @@ class Handler(socketserver.BaseRequestHandler):
                                     },
                                 )
                         self.append_history(self.user, "", data["msg"])
+
+                    elif data["action"] == "send_file":
+
+                        self.file_peer = data["peer"]
+                        # print("在发送文件时的文件接收方：",self.file_peer)
+                        file_name = data["filename"]
+                        size = data["size"]
+                        file_content = data["content"]
+                        utils.send(
+                            Handler.clients[self.file_peer].request,
+                            {
+                                "action": "send_file_yesorno",
+                                "peer": self.user,
+                                "filename": file_name,
+                                "size": size,
+                            },
+                        )
+                    elif data["action"] == "send_file_ok":
+
+                        # 发给文件接收方
+                        # print("文件接收方：",data["me"])
+                        utils.send(
+                            Handler.clients[data["me"]].request,
+                            {
+                                "action": "get_file",
+                                "peer": self.user,
+                                "filename": data["filename"],
+                                
+                                "content": file_content,
+                            },
+                        )
+                        # 发给文件发送方
+                        utils.send(
+                            self.request,
+                            {
+                                "action": "accept_file",
+                                "peer": data["me"],
+                                "filename": data["filename"],
+                            },
+                        )
+
+                    elif data["action"] == "send_file_no":
+                        # 发给文件接收方
+                        utils.send(
+                            self.request,
+                            {
+                                "action": "reject_file",
+                                "peer": data["me"],
+                                "filename": data["filename"],
+                            },
+                        )
+
                     elif data["action"] == "shutdown":
                         print(self.user + " 离开聊天室")
                         self.finish()

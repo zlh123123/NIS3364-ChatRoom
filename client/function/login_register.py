@@ -1,7 +1,9 @@
+import base64
 import threading
 import hashlib
 import socket
 import time
+import os
 
 import function.utils as utils
 
@@ -139,6 +141,53 @@ def send_msg(msg):
         QMessageBox.critical(None, "发送失败", "消息不能为空！")
 
 
+def send_file(file_path):
+    global s, user, current_object
+    if current_object == "":
+        QMessageBox.critical(None, "发送失败", "不支持全局广播文件！")
+        return
+
+    # 文件名
+    filename = file_path.split("/")[-1]
+    # 文件大小，转换为常用存储单位
+    filesize = os.path.getsize(file_path)
+    if filesize < 1024:
+        size = str(filesize) + "B"
+    elif filesize < 1024 * 1024:
+        size = str(round(filesize / 1024, 2)) + "KB"
+    elif filesize < 1024 * 1024 * 1024:
+        size = str(round(filesize / 1024 / 1024, 2)) + "MB"
+    else:
+        size = str(round(filesize / 1024 / 1024 / 1024, 2)) + "GB"
+
+    # print(f"文件名: {filename}, 文件大小: {size}")
+
+    # 文件内容
+    with open(file_path, "rb") as f:
+        content = f.read()
+
+    # print(content)
+    encoded_content = base64.b64encode(content).decode('utf-8')
+    if file_path != "":
+        utils.send(
+            s,
+            {
+                "action": "send_file",
+                "peer": current_object,
+                "filename": filename,
+                "size": size,
+                "content": encoded_content,
+            },
+        )
+        # 将发送的文件显示在聊天框中
+        chatroom_window.append_message(
+            [user, current_object, time.strftime("%m月%d日%H:%M"), filename],
+            current_object,
+        )
+    else:
+        QMessageBox.critical(None, "发送失败", "请选择要发送的文件！")
+
+
 def choose_object(object):
     global current_object, s
     current_object = object
@@ -184,8 +233,7 @@ def handle_server_response():
                 post_update_ui(
                     chatroom_window.update_history, data["data"], current_object
                 )
-                #print(data["data"])
-                
+                # print(data["data"])
 
             elif data["action"] == "person_join":
                 users.append(data["object"])
@@ -220,6 +268,77 @@ def handle_server_response():
                 else:
                     post_update_ui(chatroom_window.update_broadcast_text)
 
+            elif data["action"] == "send_file_yesorno":
+                post_update_ui(show_file_request_dialog, data)
+
+            # 对于文件接收方而言，将受到的文件保存到本地
+            elif data["action"] == "get_file":
+                #存到download文件夹
+                if not os.path.exists("download"):
+                    os.mkdir("download")
+                file_name = f"download/{data['filename']}"
+                file_content = base64.b64decode(data["content"])
+                with open(file_name, "wb") as f:
+                    f.write(file_content)
+
+            # 对于文件发送方而言，接收到接收方的接收文件确认
+            elif data["action"] == "accept_file":
+                # 以对话框的形式显示文件接收方接收文件的结果
+                post_update_ui(show_file_accept_result, data)
+
+            # 对于文件发送方而言，接收到接收方的拒绝文件确认
+            elif data["action"] == "reject_file":
+                post_update_ui(show_file_reject_result, data)
+
         except Exception as e:
             print(f"Exception in handle_server_response: {e}")
             break
+
+
+def show_file_request_dialog(data):
+    reply = QMessageBox.question(
+        None,
+        "接收文件",
+        f"是否接收来自{data['peer']}的文件：{data['filename']} ({data['size']})？",
+        QMessageBox.Yes | QMessageBox.No,
+    )
+    if reply == QMessageBox.Yes:
+        utils.send(
+            s,
+            {
+                "action": "send_file_ok",
+                "peer": data["peer"],
+                "me": user,
+                "filename": data["filename"],
+            },
+        )
+    else:
+        utils.send(
+            s,
+            {
+                "action": "send_file_no",
+                "peer": data["peer"],
+                "me": user,
+                "filename": data["filename"],
+            },
+        )
+
+
+def show_file_accept_result(data):
+    peer = data["peer"]
+    filename = data["filename"]
+    QMessageBox.information(
+        None,
+        "文件发送结果",
+        f"文件：{filename}已成功发送给{peer}！",
+    )
+
+
+def show_file_reject_result(data):
+    peer = data["peer"]
+    filename = data["filename"]
+    QMessageBox.warning(
+        None,
+        "文件发送结果",
+        f"文件：{filename}发送给{peer}遭到对方拒绝！",
+    )
